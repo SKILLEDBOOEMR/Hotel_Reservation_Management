@@ -1,0 +1,229 @@
+#Hotel Reservation Management
+def startup():
+    Current_role = None
+    role_dict = {
+    'manager' : Manager,
+    'receptionist' : Receptionist,
+    'accountant' : Accountant,
+    'guest' : Guest,
+    'housekeeping' : Housekeeping
+    }    
+    #This function is to start the app or reset :)
+    print(" ") #spacing reasons
+    Current_Role = input("\033[33mPlease Enter Which Role are you?\033[0m (Options are : Manager, Receptionist, Accountant, Housekeeping, Guest) (Enter 1 to terminate program): ").lower()
+
+    while Current_Role not in ['manager', 'receptionist', 'accountant','housekeeping','guest', '1']:
+        print("\033[31mMake Sure Role inputted is between these 3\033[0m")
+        Current_Role = input("\033[33mPlease Enter Which Role are you?\033[0m (Options are : Manager, Receptionist, Accountant, Housekeeping, Guest) (Enter 1 to terminate program): ").lower()
+
+    if Current_Role != '1':
+        role_dict[Current_Role]()
+
+class Manager:
+    def __init__(self):
+        self.menu()
+        print('manager')
+        pass
+    
+    def menu(self): #This is just the menu of the manager
+        option_dict = {
+            '1' : self.manage,
+            '2' : self.system_summary,
+            '3' : self.generate,
+            '4' : startup,
+        } # This is a list to direct the next part when they pick 1-2-3
+
+        print(" ") #spacing reasons
+        print("\033[33mWelcome You are Currently the Manager\033[0m")
+        print("1. Manage Room Records (Add, Update, Remove)")
+        print("2. View system summary (total bookings, occupancy rate, income).")
+        print("3. Generate daily and monthly performance reports.")
+        print("4. Back")
+        option_picked = str(input("\033[33mPlease pick one just state the number\033[0m (eg 1,2,3,4): ")) #input than changing the input into string
+        
+        while option_picked not in ['1', '2', '3', '4']: #Checking if the input is valid or not
+            print("\033[31mMake sure number is inputted and between 1-4\033[0m")
+            print("Welcome You are Currently the Manager")
+            print("1. Manage Room Records (Add, Update, Remove)")
+            print("2. View system summary (total bookings, occupancy rate, income).")
+            print("3. Generate daily and monthly performance reports.")
+            print("4. Back")
+            option_picked = str(input("\033[33mPlease pick one just state the number\033[0m (eg 1,2,3,4): "))
+
+        option_dict[option_picked]() #calling the function 
+
+    def manage(self):
+        print("bing bong")
+        pass
+
+    def system_summary(self):
+        print("bing bong")
+        pass
+
+    def generate(self):
+        print("bing bong")
+        pass
+
+class Receptionist:
+    def __init__(self):
+        self.menu()
+        pass
+
+    def menu(self): #This is just the menu of the Receptionist
+        option_dict = {
+            '1' : self.register,
+            '2' : self.manage_booking,
+            '3' : self.view_room_availability,
+            '4' : startup,
+        } # This is a list to direct the next part when they pick 1-2-3
+
+        print(" ") #spacing reasons
+        print("\033[34mWelcome You are Currently the Receptionist\033[0m")
+        print("1. Register guests and update information.")
+        print("2. Manage bookings (check-in, check-out, cancellations).")
+        print("3. View room availability list.")
+        print("4. Back")
+        option_picked = str(input("\033[34mPlease pick one just state the number\033[0m (eg 1,2,3,4): ")) #input than changing the input into string
+        
+        while option_picked not in ['1', '2', '3', '4']: #Checking if the input is valid or not
+            print("\033[34mWelcome You are Currently the Receptionist\033[0m")
+            print("1. Register guests and update information.")
+            print("2. Manage bookings (check-in, check-out, cancellations).")
+            print("3. View room availability list.")
+            print("4. Back")
+            option_picked = str(input("\033[34mPlease pick one just state the number\033[0m (eg 1,2,3,4): "))
+
+        option_dict[option_picked]() #calling the function 
+
+    def register(self):
+        pass
+
+    def manage_booking(self):
+        pass
+
+    def view_room_availability(self):
+        pass
+
+class Accountant:
+    def __init__(self):
+        self.menu()
+        pass
+
+    def menu(self): #This is just the menu of the Receptionist
+        option_dict = {
+            '1' : self.register,
+            '2' : self.manage_booking,
+            '3' : self.view_room_availability,
+            '4' : startup,
+        } # This is a list to direct the next part when they pick 1-2-3
+
+        print(" ") #spacing reasons
+        print("\033[35mWelcome You are Currently the Accountant\033[0m")
+        print("1. Record guest payments")
+        print("2. Generate income and outstanding payment reports.")
+        print("3. Generate monthly financial summary")
+        print("4. Back")
+        option_picked = str(input("\033[35mPlease pick one just state the number\033[0m (eg 1,2,3,4): ")) #input than changing the input into string
+        
+        while option_picked not in ['1', '2', '3', '4']: #Checking if the input is valid or not
+            print("\033[35mWelcome You are Currently the Accountant\033[0m")
+            print("1. Record guest payments")
+            print("2. Generate income and outstanding payment reports.")
+            print("3. Generate monthly financial summary")
+            print("4. Back")
+            option_picked = str(input("\033[35mPlease pick one just state the number\033[0m (eg 1,2,3,4): "))
+
+        option_dict[option_picked]() #calling the function 
+
+    def register(self):
+        pass
+
+    def manage_booking(self):
+        pass
+
+    def view_room_availability(self):
+        pass
+
+class Housekeeping:
+    def __init__(self):
+        self.menu()
+        pass
+
+    def menu(self): #This is just the menu of the Receptionist
+        option_dict = {
+            '1' : self.register,
+            '2' : self.manage_booking,
+            '3' : self.view_room_availability,
+            '4' : startup,
+        } # This is a list to direct the next part when they pick 1-2-3
+
+        print(" ") #spacing reasons
+        print("\033[36mWelcome You are Currently the Accountant\033[0m")
+        print("1. Update room cleaning status.")
+        print("2. Report maintenance issues.")
+        print("3. View daily cleaning schedule.")
+        print("4. Back")
+        option_picked = str(input("\033[36mPlease pick one just state the number\033[0m (eg 1,2,3,4): ")) #input than changing the input into string
+        
+        while option_picked not in ['1', '2', '3', '4']: #Checking if the input is valid or not
+            print("\033[36mWelcome You are Currently the Accountant\033[0m")
+            print("1. Update room cleaning status.")
+            print("2. Report maintenance issues.")
+            print("3. View daily cleaning schedule.")
+            print("4. Back")
+            option_picked = str(input("\033[36mPlease pick one just state the number\033[0m (eg 1,2,3,4): "))
+
+        option_dict[option_picked]() #calling the function 
+
+    def register(self):
+        pass
+
+    def manage_booking(self):
+        pass
+
+    def view_room_availability(self):
+        pass
+
+class Guest:
+    def __init__(self):
+        self.menu()
+        pass
+
+    def menu(self): #This is just the menu of the Receptionist
+        option_dict = {
+            '1' : self.register,
+            '2' : self.manage_booking,
+            '3' : self.view_room_availability,
+            '4' : startup,
+        } # This is a list to direct the next part when they pick 1-2-3
+
+        print(" ") #spacing reasons
+        print("\033[35mWelcome You are Currently the Accountant\033[0m")
+        print("1. Record guest payments")
+        print("2. Generate income and outstanding payment reports.")
+        print("3. Generate monthly financial summary")
+        print("4. Back")
+        option_picked = str(input("\033[35mPlease pick one just state the number\033[0m (eg 1,2,3,4): ")) #input than changing the input into string
+        
+        while option_picked not in ['1', '2', '3', '4']: #Checking if the input is valid or not
+            print("\033[35mWelcome You are Currently the Accountant\033[0m")
+            print("1. Record guest payments")
+            print("2. Generate income and outstanding payment reports.")
+            print("3. Generate monthly financial summary")
+            print("4. Back")
+            option_picked = str(input("\033[35mPlease pick one just state the number\033[0m (eg 1,2,3,4): "))
+
+        option_dict[option_picked]() #calling the function 
+
+    def register(self):
+        pass
+
+    def manage_booking(self):
+        pass
+
+    def view_room_availability(self):
+        pass
+
+#Role dict
+startup()
+#Part to create the files if it havent been created
