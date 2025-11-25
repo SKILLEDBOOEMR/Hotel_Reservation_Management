@@ -19,6 +19,16 @@ def startup():
     if Current_Role != '1':
         role_dict[Current_Role]()
 
+#file management 
+def file_init():
+    open("room.txt", 'x') 
+    #The room file have one purpose and a functionality
+    # The code is being read line by line so one room is one line
+    #The manager is the only one who could add, update, remove a room 
+    open("financial_report.txt","x")
+    open("system_report" ,"x")
+
+
 class Manager:
     def __init__(self):
         self.menu()
@@ -52,8 +62,39 @@ class Manager:
         option_dict[option_picked]() #calling the function 
 
     def manage(self):
-        print("bing bong")
-        pass
+        option_dict = {
+            '1' : self.manage_add,
+            '2' : self.manage_remove,
+            '3' : self.manage_update,
+            '4' : self.menu,
+        }
+
+        print(" ") #spacing reasons
+        print("\033[33mWelcome You are Currently the Manager\033[0m")
+        print("1. Add a Room")
+        print("2. Remove a Room")
+        print("3. Update a Room")
+        print("4. Back")
+        option_picked = str(input("\033[33mPlease pick one just state the number\033[0m (eg 1,2,3,4): ")) #input than changing the input into string
+        
+        while option_picked not in ['1', '2', '3', '4']: #Checking if the input is valid or not
+            print("\033[31mMake sure number is inputted and between 1-4\033[0m")
+            print("Welcome You are Currently the Manager")
+            print("1. Add a Room")
+            print("2. Remove a Room")
+            print("3. Update a Room")
+            print("4. Back")
+            option_picked = str(input("\033[33mPlease pick one just state the number\033[0m (eg 1,2,3,4): "))
+        option_dict[option_picked]()
+
+    def manage_add(self):
+        print("hello :)")
+
+    def manage_remove(self):
+        print("hello :)")
+
+    def manage_update(self):
+        print("hello :)")
 
     def system_summary(self):
         print("bing bong")
