@@ -1,5 +1,6 @@
 #Hotel Reservation Management
 def startup():
+    file_init()
     Current_role = None
     role_dict = {
     'manager' : Manager,
@@ -21,12 +22,38 @@ def startup():
 
 #file management 
 def file_init():
-    open("room.txt", 'x') 
-    #The room file have one purpose and a functionality
-    # The code is being read line by line so one room is one line
-    #The manager is the only one who could add, update, remove a room 
-    open("financial_report.txt","x")
-    open("system_report" ,"x")
+    try:
+        open("room.txt", 'x') 
+        #The room file have one purpose and a functionality
+        # The code is being read line by line so one room is one line
+        #The manager is the only one who could add, update, remove a room 
+        open("financial_report.txt","x")
+        open("system_report.txt" ,"x")
+    except:
+        pass
+
+#Universal Functions
+def decode_txt_File_to_list_of_data(file_type):
+        try:
+            res_list = []
+
+            with open(file_type, 'r+') as file_txt:
+                if file_txt.read() == '':
+                    return []
+                
+                else:
+                    file_txt.seek(0)
+                    for line in file_txt:
+                        res_list.append(line.strip().split(','))
+                    return res_list
+        except Exception:
+            print("Error at Decoding ")
+def return_number_of_row_In_txt(file_type):
+    with open(file_type, 'r') as file:
+        count = 0
+        for line in file:
+            count += 1
+        return count
 
 
 class Manager:
@@ -88,7 +115,8 @@ class Manager:
         option_dict[option_picked]()
 
     def manage_add(self):
-        print("hello :)")
+        with open('room.txt','a') as room_txt:
+            room_txt.writelines("\nHello,test")
 
     def manage_remove(self):
         print("hello :)")
