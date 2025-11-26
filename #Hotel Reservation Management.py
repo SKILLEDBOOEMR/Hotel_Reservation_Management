@@ -95,28 +95,52 @@ class Manager:
             '3' : self.manage_update,
             '4' : self.menu,
         }
+        room_list = decode_txt_File_to_list_of_data("room.txt")
+        header = ['Occupancy', 'Pricing','Cleaning_Status']
 
-        print(" ") #spacing reasons
-        print("\033[33mWelcome You are Currently the Manager\033[0m")
-        print("1. Add a Room")
-        print("2. Remove a Room")
-        print("3. Update a Room")
-        print("4. Back")
-        option_picked = str(input("\033[33mPlease pick one just state the number\033[0m (eg 1,2,3,4): ")) #input than changing the input into string
+        option_picked = None
         
         while option_picked not in ['1', '2', '3', '4']: #Checking if the input is valid or not
-            print("\033[31mMake sure number is inputted and between 1-4\033[0m")
-            print("Welcome You are Currently the Manager")
+            print(" ") #spacing reasons
+            print("\033[33mWelcome You are Currently the Manager\033[0m")
+            print("\033[33mThese are the current Rooms\033[0m")
+            #Printing in a nice table format
+            print("Index".ljust(10),end="")
+            for col in header:
+                print(col.ljust(20),end="")
+            print()
+
+            for i, row in enumerate(room_list,start=1):
+                print(str(i).ljust(10),end='')
+                for col in row :
+                    print(str(col).ljust(20),end="")
+                print()
+
+            print()
+            print("\033[33mWhat do you want to do?\033[0m")
             print("1. Add a Room")
             print("2. Remove a Room")
             print("3. Update a Room")
             print("4. Back")
-            option_picked = str(input("\033[33mPlease pick one just state the number\033[0m (eg 1,2,3,4): "))
+            option_picked = str(input("\033[33mPlease pick one just state the number\033[0m (eg 1,2,3,4): ")) #input than changing the input into string
         option_dict[option_picked]()
 
     def manage_add(self):
-        with open('room.txt','a') as room_txt:
-            room_txt.writelines("\nHello,test")
+        added_room_list = ['-'] * 3
+        print()
+        while type(added_room_list[1]) != float: 
+            try:
+                added_room_list[1] = float(input("What will The Price be for this room?: "))
+            except:
+                print("Invalid Pricing")
+        added_room_list[1] = str(added_room_list[1])
+        added_room_str = ",".join(added_room_list)
+
+        with open('room.txt','a+') as room_txt:
+            room_txt.writelines(added_room_str + "\n")
+        print("\033[32mSuccessfully Added a New Room\033[00m")
+
+        self.manage()
 
     def manage_remove(self):
         print("hello :)")
