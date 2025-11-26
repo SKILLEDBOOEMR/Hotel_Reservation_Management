@@ -127,23 +127,55 @@ class Manager:
 
     def manage_add(self):
         added_room_list = ['-'] * 3
-        print()
         while type(added_room_list[1]) != float: 
             try:
-                added_room_list[1] = float(input("What will The Price be for this room?: "))
+                added_room_list[1] = input("What will The Price be for this room? (type: back to go back to menu): ")
+                if added_room_list[1].lower() == 'back':
+                    self.manage()
+                    return
+                else:
+                    added_room_list[1] = float(added_room_list[1])
             except:
-                print("Invalid Pricing")
+                print("Invalid Input")
         added_room_list[1] = str(added_room_list[1])
         added_room_str = ",".join(added_room_list)
 
         with open('room.txt','a+') as room_txt:
-            room_txt.writelines(added_room_str + "\n")
+            room_txt.write(added_room_str + "\n")
         print("\033[32mSuccessfully Added a New Room\033[00m")
 
         self.manage()
 
     def manage_remove(self):
-        print("hello :)")
+        room_data_List = decode_txt_File_to_list_of_data('room.txt')
+        if not room_data_List:
+            print("\033[31mNo rooms to remove.\033[0m")
+            self.manage()
+            return
+
+        while True:
+            try:
+                temp_index = input("Please Enter the Index of the Room you want to delete (type: back to go back to menu): ") 
+                if temp_index.lower() == 'back':
+                    self.manage()
+                    return
+                else:
+                    temp_index = int(temp_index) - 1
+            except ValueError:
+                print("Invalid Input")
+                continue
+            if 0 <= temp_index < len(room_data_List):
+                break
+            print(f"\033[31mIndex must be between 1 and {len(room_data_List)}\033[0m")
+
+        room_data_List.pop(temp_index)
+        with open("room.txt", "w", encoding="utf-8") as room_txt:
+            for data in room_data_List:
+                room_txt.write(",".join(data) + "\n")
+
+        print(f"\033[32mSuccessfully Removed a Room index {temp_index + 1}\033[00m")
+        self.manage()
+
 
     def manage_update(self):
         print("hello :)")
