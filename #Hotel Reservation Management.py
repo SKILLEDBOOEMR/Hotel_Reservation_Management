@@ -21,16 +21,17 @@ def startup():
         role_dict[Current_Role]()
 
 #file management 
+#file management 
 def file_init():
-    try:
-        open("room.txt", 'x') 
-        #The room file have one purpose and a functionality
-        # The code is being read line by line so one room is one line
-        #The manager is the only one who could add, update, remove a room 
-        open("financial_report.txt","x")
-        open("system_report.txt" ,"x")
-    except:
-        pass
+    files_to_create = ["room.txt", "order_Report.txt","booking.txt", "system_report.txt","guest.txt"]
+    
+    for file_name in files_to_create:
+        try:
+            open(file_name, 'x').close()
+        except FileExistsError:
+            pass
+        except Exception as e:
+            print(f"Error creating {file_name}: {e}")
 
 #Universal Functions
 def decode_txt_File_to_list_of_data(file_type):
@@ -54,8 +55,20 @@ def return_number_of_row_In_txt(file_type):
         for line in file:
             count += 1
         return count
-
-
+def from_array_to_txt_file_conversion(lists, file_type, Typing_type):
+    is_2D_arr = False
+    try:
+        lists[0][0]
+        is_2D_arr = True
+    except (IndexError, TypeError):
+        is_2D_arr = False
+    
+    with open(file_type, Typing_type) as file:
+        if is_2D_arr:
+            for row in lists:
+                file.write(",".join(row) + "\n")
+        else:
+            file.write(",".join(lists) + "\n")
 class Manager:
     def __init__(self):
         self.menu()
@@ -126,7 +139,7 @@ class Manager:
         option_dict[option_picked]()
 
     def manage_add(self):
-        added_room_list = ['-'] * 3
+        added_room_list = ['-','-','False'] 
         while type(added_room_list[1]) != float: 
             try:
                 added_room_list[1] = input("What will The Price be for this room? (type: back to go back to menu): ")
@@ -138,10 +151,8 @@ class Manager:
             except:
                 print("Invalid Input")
         added_room_list[1] = str(added_room_list[1])
-        added_room_str = ",".join(added_room_list)
-
-        with open('room.txt','a+') as room_txt:
-            room_txt.write(added_room_str + "\n")
+        
+        from_array_to_txt_file_conversion([added_room_list], "room.txt", "a+")
         print("\033[32mSuccessfully Added a New Room\033[00m")
 
         self.manage()
@@ -169,10 +180,7 @@ class Manager:
             print(f"\033[31mIndex must be between 1 and {len(room_data_List)}\033[0m")
 
         room_data_List.pop(temp_index)
-        with open("room.txt", "w", encoding="utf-8") as room_txt:
-            for data in room_data_List:
-                room_txt.write(",".join(data) + "\n")
-
+        from_array_to_txt_file_conversion(room_data_List,"room.txt","w")
         print(f"\033[32mSuccessfully Removed a Room index {temp_index + 1}\033[00m")
         self.manage()
 
@@ -254,29 +262,32 @@ class Manager:
             case 2:
                 while True:
                     try:
-                        x = input("Updated Cleaning Status (type: back to go back to menu): ")
+                        x = input("Updated Cleaning Status (ONLY TRUE OR FALSE!) (type: back to go back to menu): ")
                         if x.lower() == 'back':
                             self.manage_update()
                             return
-                        else:
-                            x = str(x)
+                        elif x.lower() == 'true':
+                            x = 'True'
                             break
+                        elif x.lower() == 'false':
+                            x = 'False'
+                            break
+                        else:
+                            print("Invalid Input")
+                            continue
                     except:
                         print("Invalid Input")
                         continue
                 
-
-
-        with open("room.txt", "w", encoding="utf-8") as room_txt:
-            room_data_List[temp_index][option] = str(x)
-            for data in room_data_List:
-                room_txt.write(",".join(data) + "\n")
-
+        room_data_List[temp_index][option] = str(x)
+        from_array_to_txt_file_conversion(room_data_List,"room.txt","w")
         print(f"\033[32mSuccessfully Updated a Room index {temp_index + 1}\033[00m")
         self.manage()
 
     def system_summary(self):
-        print("bing bong")
+        print("")
+        print("\033[33mView system summary\033[00m")
+        print("1.")
         pass
 
     def generate(self):
@@ -315,6 +326,65 @@ class Receptionist:
         option_dict[option_picked]() #calling the function 
 
     def register(self):
+        room_list = decode_txt_File_to_list_of_data("guest.txt")
+        header = ['Name', 'phone_number','email','address']
+    
+        while True:
+            print(" ")
+            print("\033[34mWelcome You are Currently the Receptionist\033[0m")
+            print("\033[34mThese are the current Guests\033[0m")
+            print("Index".ljust(10),end="")
+            for col in header:
+                print(col.ljust(30),end="")
+            print()
+
+            for i, row in enumerate(room_list,start=1):
+                print(str(i).ljust(10),end='')
+                for col in row:
+                    print(str(col).ljust(30),end="")
+                print()
+            print()
+
+            print("\033[34mWhat do you want to do?\033[0m")
+            print("1. Register a New Guest")
+            print("2. Update a Existing Guest")
+            print("3. Back to menu")
+            option_picked = input("\033[34mEnter: \033[0m")
+            
+            if option_picked == '1':
+                self.register_new_guest()
+                return
+
+            elif option_picked == '2':
+                self.update_guest()
+                return
+            
+            elif option_picked == '3':
+                self.menu()
+                return
+            else:
+                print("\033[31mInvalid Input\033[0m")
+                continue
+
+    def register_new_guest(self):
+        print("\033[34mCurrently creating Account\033[0m")
+        Name = input("Enter Guest Name: ")
+        while True:
+            try:
+                phone_Number = input("Enter Guest Phone Number: ")
+                int(phone_Number)
+                break
+            except ValueError:
+                print("\033[31mInvalid Input - enter numbers only\033[0m")
+
+        email = input("Enter Guest Email: ")
+        address = input("Enter Guest Address: ")
+
+        input_List = [Name, phone_Number, email, address]
+        from_array_to_txt_file_conversion([input_List], 'guest.txt', 'a+')
+        print("\033[32mGuest registered successfully!\033[0m")
+
+    def update_guest(self):
         pass
 
     def manage_booking(self):
