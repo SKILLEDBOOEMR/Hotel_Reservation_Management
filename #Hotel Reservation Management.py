@@ -176,9 +176,104 @@ class Manager:
         print(f"\033[32mSuccessfully Removed a Room index {temp_index + 1}\033[00m")
         self.manage()
 
-
     def manage_update(self):
-        print("hello :)")
+        room_data_List = decode_txt_File_to_list_of_data('room.txt')
+        if not room_data_List:
+            print("\033[31mNo rooms to Update.\033[0m")
+            self.manage()
+            return
+        
+        while True:
+            try:
+                temp_index = input("Please Enter the Index of the Room you want to Update (type: back to go back to menu): ") 
+                if temp_index.lower() == 'back':
+                    self.manage()
+                    return
+                else:
+                    temp_index = int(temp_index) - 1
+            except ValueError:
+                print("Invalid Input")
+                continue
+            if 0 <= temp_index < len(room_data_List):
+                break
+            print(f"\033[31mIndex must be between 1 and {len(room_data_List)}\033[0m")
+
+        while True:
+            try:
+                print("")
+                print("\033[33mWhat do you want to update?\033[00m")
+                print(f"1.Occupancy (Currently: {room_data_List[temp_index][0]})")
+                print(f"2.Price (Currently: {room_data_List[temp_index][1]})")
+                print(f"3.Cleaning Status (Currently: {room_data_List[temp_index][2]})")
+                option = input("\033[33mEnter Here\033[00m (type: back to go back to menu): ")
+                if option.lower() == 'back':
+                    self.manage_update()
+                    return
+                else:
+                    option = int(option) - 1
+            except:
+                print("Invalid Input")
+                continue
+
+            if -1 < option < 3:
+                break
+            print("\033[31mIndex must be between 1 and 3\033[0m")
+    
+        match option:
+            case 0:
+                while True:
+                    try:
+                        x = input("Updated occupancy (type: back to go back to menu): ")
+                        if x.lower() == 'back':
+                            self.manage_update()
+                            return
+                        else:
+                            x = str(x)
+                            break
+                    except:
+                        print("Invalid Input")
+                        continue
+                
+
+                    
+            case 1:
+                while True:
+                    try:
+                        x = input("Updated Price (type: back to go back to menu): ")
+                        if x.lower() == 'back':
+                            self.manage_update()
+                            return
+                        else:
+                            x = float(x)
+                            break
+                    except:
+                        print("Invalid Input")
+                        continue
+                
+
+            case 2:
+                while True:
+                    try:
+                        x = input("Updated Cleaning Status (type: back to go back to menu): ")
+                        if x.lower() == 'back':
+                            self.manage_update()
+                            return
+                        else:
+                            x = str(x)
+                            break
+                    except:
+                        print("Invalid Input")
+                        continue
+                
+
+
+        with open("room.txt", "w", encoding="utf-8") as room_txt:
+            room_data_List[temp_index][option] = str(x)
+            for data in room_data_List:
+                room_txt.write(",".join(data) + "\n")
+
+        print(f"\033[32mSuccessfully Updated a Room index {temp_index + 1}\033[00m")
+        self.manage()
 
     def system_summary(self):
         print("bing bong")
