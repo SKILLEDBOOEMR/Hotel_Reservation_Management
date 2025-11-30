@@ -21,9 +21,8 @@ def startup():
         role_dict[Current_Role]()
 
 #file management 
-#file management 
 def file_init():
-    files_to_create = ["room.txt", "order_Report.txt","booking.txt", "system_report.txt","guest.txt"]
+    files_to_create = ["room.txt", "order_report.txt","booking.txt", "system_report.txt","guest.txt"]
     
     for file_name in files_to_create:
         try:
@@ -541,7 +540,7 @@ def receptionist_update_guest():
 def receptionist_manage_booking():
     room_list = decode_txt_File_to_list_of_data("room.txt")
     guest_list = decode_txt_File_to_list_of_data("guest.txt")
-    order_Listz = decode_txt_File_to_list_of_data("order_Report.txt")
+    order_Listz = decode_txt_File_to_list_of_data("order_report.txt")
     header = ["Room Special ID"'Occupancy Guest ID', 'Pricing','Cleaning_Status', 'Message']
     header2 = ['Special_ID''Name', 'phone_number','email','address']
 
@@ -606,6 +605,7 @@ def receptionist_manage_booking():
         guest_id_check = [row[0] for row in guest_list]
         room_id_check = [row[0] for row in room_list]
         order_id_check = [row[0] for row in order_Listz]
+        order_id_check_unfinished = [row[0] for row in order_Listz if row[-1] in ['-','']]
     
 
         print("\033[34mWhat do you want to do?\033[0m")
@@ -682,7 +682,7 @@ def receptionist_manage_booking():
                     r_count = i
 
             Total_Price = float(room_list[r_count][2]) * float(days_booked) #Calculates the Prices
-            room_list[r_count][0] = str(guest_id)
+            room_list[r_count][1] = str(guest_id)
 
             #Order ID, Member ID, Room ID, Check IN date, Check OUT date, Total Price, Total Days Booked, Actual payed
             order_list = ['',str(guest_id),str(room_id),'-'.join(check_in),"-",str(Total_Price),days_booked,'-']
@@ -694,12 +694,11 @@ def receptionist_manage_booking():
                 order_list[0] = str(int(order_Listz[len(order_Listz) - 1][0]) + 1)
 
             from_array_to_txt_file_conversion(room_list,'room.txt',"w")
-            from_array_to_txt_file_conversion(order_list,'order_Report.txt',"a+")
+            from_array_to_txt_file_conversion(order_list,'order_report.txt',"a+")
             print(f"\033[32mSuccessfully Check In a Guest \033[00m")
             receptionist_manage_booking()
 
         case '2':
-            order_lists = decode_txt_File_to_list_of_data("order_Report.txt")
             print(" ") #spacing reasons
             print("\033[34mManaging Rooms\033[0m")
             print("\033[34mThese are the current unfinished orders\033[0m")
@@ -710,7 +709,7 @@ def receptionist_manage_booking():
                 print(col.ljust(20),end="")
             print()
 
-            for i, row in enumerate(order_lists,start=1):
+            for i, row in enumerate(order_Listz,start=1):
                 if row[4] == '-':
                     print(str(i).ljust(10),end='')
                     for col in row :
@@ -762,19 +761,108 @@ def receptionist_manage_booking():
 
             if room_id_of_order in room_id_check:
                 room_idx = room_id_check.index(room_id_of_order)
-                room_list[room_idx][2] = "-"      # reset price/placeholder
+                room_list[room_idx][1] = "-"      # reset price/placeholder
                 room_list[room_idx][3] = "False"  # mark as not occupied / cleaned
             else:
                 print("\033[31mWarning: Room ID referenced by order not found in room list.\033[0m")
 
-            from_array_to_txt_file_conversion(order_Listz,'order_Report.txt','w')
+            from_array_to_txt_file_conversion(order_Listz,'order_report.txt','w')
             from_array_to_txt_file_conversion(room_list,'room.txt','w')
             print(f"\033[32mSuccessfully Check Out a Guest \033[00m")
             receptionist_manage_booking()
-    pass
+    
+        case '3':
+            if len(order_Listz) < 1:
+                print("\033[91mThere is no Unfinished Orders\033[0m")
+                receptionist_manage_booking()
+                return
+
+            print(" ") #spacing reasons
+            print("\033[34mManaging Rooms\033[0m")
+            print("\033[34mThese are the current unfinished orders\033[0m")
+            #Printing in a nice table format
+            header = ["Order ID","Member ID", "Room ID", "Check IN date", "Check OUT date", "Total Price", "Total Days Booked", "Actual payed"]
+            print("Index".ljust(10),end="")
+            for col in header:
+                print(col.ljust(20),end="")
+            print()
+
+            for i, row in enumerate(order_Listz,start=1):
+                if row[4] == '-':
+                    print(str(i).ljust(10),end='')
+                    for col in row :
+                        print(str(col).ljust(20),end="")
+                    print()
+            print()
+
+            while True:
+                order_id = input("Please Enter the Order Special ID (type back to go back): ")
+                if order_id == 'back':
+                    receptionist_manage_booking()
+                    break
+                if order_id not in order_id_check_unfinished:
+                    print("Order ID isnt Registered!")
+                    continue
+                else:
+                    break
+
+            while True:
+                yes_no = input("Are you Sure? (Yes or No) (type back to go back): ")
+                if yes_no in ['back','no']:
+                    receptionist_manage_booking()
+                    break
+                else:
+                    break
+
+            order_Listz.pop(order_id_check.index(order_id))
+            from_array_to_txt_file_conversion(order_Listz,'order_report.txt','w')
+            print("\033[32mSuccessfully deleted the order\033[00m")
+            receptionist_manage_booking()
+        case '4':
+            receptionist_menu()
 
 def receptionist_view_room_availability():
-    pass
+    room_list = decode_txt_File_to_list_of_data('room.txt')
+
+    print(" ") #spacing reasons
+    print("\033[34mManaging Rooms\033[0m")
+    print("\033[34mThese are the current Rooms Available \033[0m")
+
+    # correct headers
+    header = ["Room Special ID", "Occupancy/Guest ID", "Pricing", "Cleaning_Status", "Message"]
+
+    # compute column widths from header + data
+    cols = len(header)
+    rows = room_list if room_list else []
+    col_widths = [len(header[i]) for i in range(cols)]
+    for r in rows:
+        for i in range(min(cols, len(r))):
+            col_widths[i] = max(col_widths[i], len(str(r[i])))
+
+    # print header
+    print("Index".ljust(6), end=" ")
+    for i, col in enumerate(header):
+        print(col.ljust(col_widths[i] + 2), end="")
+    print()
+
+    # print rows
+    for i, row in enumerate(rows, start=1):
+        if row[1] in ['','-']:
+            print(str(i).ljust(6), end=" ")
+            for j in range(cols):
+                val = str(row[j]) if j < len(row) else ""
+                print(val.ljust(col_widths[j] + 2), end="")
+            print()
+    print()
+
+    while True:
+        inputs = input("Enter Back to go Back: ")
+        if inputs.lower() == 'back':
+            receptionist_menu()
+            break
+        else:
+            print("Invalid Input")
+
 
 def accountant_menu(): #This is just the menu of the Receptionist
     option_dict = {
@@ -810,7 +898,6 @@ def accountant_generate_income_and_outstanding_payment_reports():
 
 def accountant_generate_monthly_financial_summary():
     pass
-
 
 def housekeeper_menu(): #This is just the menu of the House Keeper
     option_dict = {
