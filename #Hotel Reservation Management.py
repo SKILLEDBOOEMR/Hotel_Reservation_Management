@@ -9,8 +9,6 @@ def startup():
     'guest' : guest_menu,
     'housekeeping' : housekeeper_menu
     }    
-    #This function is to start the app or reset :)
-    print(" ") #spacing reasons
     Current_Role = input("\033[33mPlease Enter Which Role are you?\033[0m (Options are : Manager, Receptionist, Accountant, Housekeeping, Guest) (Enter 1 to terminate program): ").lower()
 
     while Current_Role not in ['manager', 'receptionist', 'accountant','housekeeping','guest', '1']:
@@ -19,7 +17,7 @@ def startup():
 
     if Current_Role != '1':
         role_dict[Current_Role]()
-
+    
 #file management 
 def file_init():
     files_to_create = ["room.txt", "order_report.txt","booking.txt", "system_report.txt","guest.txt"]
@@ -106,6 +104,76 @@ def input_date(prompt, allow_back=True):
         except (ValueError, IndexError):
             print("\033[31mInvalid input / Date Format: (05-06-2008)\033[0m")
             continue
+def calculate_check_out_date_from_check_in_date(check_in, how_many_days):
+    # check_in = [day, month, year]
+    check_in = [int(n) for n in check_in]
+    day,month, year = check_in
+
+    month_days = {
+        1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30,
+        7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31
+    }
+
+    # Add days
+    day += how_many_days
+
+    # Handle day overflow month by month
+    while day > month_days[month]:
+        day -= month_days[month]
+        month += 1
+        if month > 12:
+            month = 1
+            year += 1
+
+    return [day,month,year]
+def check_if_two_date_range_intertwine(start1, end1, start2, end2, inclusive=True):
+    """
+    Determine whether two date ranges overlap.
+    Each date must be a list/tuple [day, month, year] (ints or numeric strings).
+    inclusive=True treats touching endpoints as overlapping (e.g. end1 == start2 -> True).
+    Returns True if ranges intertwine/overlap, False otherwise.
+    """
+    def to_tuple(d):
+        if not (isinstance(d, (list, tuple)) and len(d) == 3):
+            raise ValueError("date must be [day,month,year]")
+        day, month, year = int(d[0]), int(d[1]), int(d[2])
+        return (year, month, day)  # lexicographic comparable
+
+    s1, e1 = to_tuple(start1), to_tuple(end1)
+    s2, e2 = to_tuple(start2), to_tuple(end2)
+
+
+    # normalize so start <= end
+    if s1 > e1:
+        s1, e1 = e1, s1
+    if s2 > e2:
+        s2, e2 = e2, s2
+
+    if inclusive:
+        return not (e1 < s2 or e2 < s1)
+    else:
+        return not (e1 <= s2 or e2 <= s1)
+def check_if_a_date_is_in_range(date1, start1, end1,month_only = False):
+    def to_tuple(d):
+        if not (isinstance(d, (list, tuple)) and len(d) == 3):
+            raise ValueError("date must be [day,month,year]")
+        day, month, year = int(d[0]), int(d[1]), int(d[2])
+        if month_only:
+            return (year, month)
+        else:
+            return (year, month, day)  # lexicographic comparable
+    
+    date1 = to_tuple(date1)
+    start1 = to_tuple(start1)
+    end1 = to_tuple(end1)
+    
+    # Normalize so start <= end
+    if start1 > end1:
+        start1, end1 = end1, start1
+    
+    # Check if date1 is within range (inclusive)
+    return start1 <= date1 <= end1
+
 #Manager Functions
 def manager_menu(): #This is just the menu of the manager
     option_dict = {
@@ -142,7 +210,7 @@ def manager_manage():
         '4' : manager_menu,
     }
     room_list = decode_txt_File_to_list_of_data("room.txt")
-    header = ['Room Special ID','Occupancy', 'Pricing','Cleaning_Status', "Room Type"]
+    header = ['Room Special ID', 'Pricing','Cleaning_Status', "Room Type"]
 
     option_picked = None
     
@@ -173,16 +241,16 @@ def manager_manage():
 
 def manager_add():
     room_list = decode_txt_File_to_list_of_data("room.txt")
-    added_room_list = ['-','-','False','-',''] #Occupancy, Price, Cleaning Status, Room_Special_iD, Room Type
+    added_room_list = ['-','-','False',''] #, Room_Special_iD, Price, Cleaning Status, Room Type
     
     # Get room name first
-    while not added_room_list[4]:
-        added_room_list[4] = input("What's This Room Called?: ").strip()
-        if not added_room_list[4]:
+    while not added_room_list[3]:
+        added_room_list[3] = input("What's This Room Called?: ").strip()
+        if not added_room_list[3]:
             print("\033[31mRoom name cannot be empty!\033[0m")
     
     # Get price
-    while type(added_room_list[2]) != float: 
+    while type(added_room_list[1]) != float: 
         try:
             price_input = input("What will the Price be for this room? (type: back to go back to menu): ").strip()
             if price_input.lower() == 'back':
@@ -193,7 +261,7 @@ def manager_add():
             if price < 0:
                 print("\033[31mPrice cannot be negative!\033[0m")
                 continue
-            added_room_list[2] = price
+            added_room_list[1] = price
         except ValueError:
             print("\033[31mInvalid Input - Please enter a valid number\033[0m")
 
@@ -209,6 +277,7 @@ def manager_add():
 
 def manager_remove():
     room_data_List = decode_txt_File_to_list_of_data('room.txt')
+    order_list = decode_txt_File_to_list_of_data("order_report.txt")
     if not room_data_List:
         print("\033[31mNo rooms to remove.\033[0m")
         manager_manage()
@@ -232,9 +301,18 @@ def manager_remove():
             break
         print(f"\033[31mSpecial ID Dont Exists!\033[0m")
 
-    from_array_to_txt_file_conversion(room_data_List,"room.txt","w")
-    print(f"\033[32mSuccessfully Removed a Room\033[00m")
-    manager_manage()
+    order_lists = [n for n in order_list if n[-1] in ['-',''] and n[2] == temp_index]
+    while True:
+        yes_no = input(f"Are You Sure to Delete This room? (Unfinished Orders Tied: {len(order_lists)}) (type: back to go back to menu):  ")
+        if yes_no.lower() in ['back','no']:
+            manager_manage()
+            return
+        elif yes_no.lower() == 'yes':
+            order_list = [n for n in order_list if n not in order_lists]
+            from_array_to_txt_file_conversion(order_list,'order_report.txt','w')
+            from_array_to_txt_file_conversion(room_data_List,"room.txt","w")
+            print(f"\033[32mSuccessfully Removed a Room\033[00m")
+            manager_manage()
 
 def manager_update():
     room_data_List = decode_txt_File_to_list_of_data('room.txt')
@@ -265,8 +343,8 @@ def manager_update():
         try:
             print("")
             print("\033[33mWhat do you want to update?\033[00m")
-            print(f"1.Price (Currently: {room_data_List[temp_index][2]})")
-            print(f"2.Cleaning Status (Currently: {room_data_List[temp_index][3]})")
+            print(f"1.Price (Currently: {room_data_List[temp_index][1]})")
+            print(f"2.Cleaning Status (Currently: {room_data_List[temp_index][2]})")
             option = input("\033[33mEnter Here\033[00m (type: back to go back to menu): ")
             if option.lower() == 'back':
                 manager_update()
@@ -318,21 +396,134 @@ def manager_update():
                     print("Invalid Input")
                     continue
             
-    room_data_List[temp_index][option+1] = str(x)
+    room_data_List[temp_index][option] = str(x)
     from_array_to_txt_file_conversion(room_data_List,"room.txt","w")
     print(f"\033[32mSuccessfully Updated a Room index {temp_index + 1}\033[00m")
     manager_manage()
 
 def manager_system_summary():
+    room_list = decode_txt_File_to_list_of_data('room.txt')
+    order_list = decode_txt_File_to_list_of_data('order_report.txt')
+    guest_list = decode_txt_File_to_list_of_data("guest.txt")
+
+    # Count rooms where the status is NOT empty or '-'
+    occupied_rooms = [n for n in room_list if n[-1] not in ['', '-']]
+    occupancy_rate = len(occupied_rooms) / len(room_list) * 100
+
+    # Sum income, skipping empty or '-'
+    total_income = sum(float(n[-1]) for n in order_list if n[-1] not in ['', '-'])
+
     print("")
     print("\033[33mView system summary\033[00m")
-    print("1.")
-    pass
+    print(f"1. Total Bookings: {len(order_list)}")
+    print(f"2. Total Guests: {len(guest_list)}")
+    print(f"3. Total Income: {total_income}")
+    print(f"4. Total Rooms: {len(room_list)}")
+    print()
+    manager_menu()
 
 def manager_generate():
-    print("bing bong")
-    pass
+    room_list = decode_txt_File_to_list_of_data("room.txt")
+    order_list = decode_txt_File_to_list_of_data("order_report.txt")
 
+    while True:
+        print(" ") #spacing reasons
+        print("\033[33mWelcome You are Currently the Manager\033[0m")
+        print("1. View Daily Performance Report")
+        print("2. View Monthly Performance Report")
+        print("3. Back")
+        option_picked = str(input("\033[33mPlease pick one just state the number\033[0m (eg 1,2,3,4): ")) 
+        
+        
+        if option_picked in ['1','2','3']:
+            break
+        else:
+            print("Invalid Input")
+            continue
+
+    match option_picked:
+        case "1":
+
+            while True:
+                check_in = input_date("Date? (Format : DD-MM-YYYY) (type back to go back): ")
+
+                if check_in == 'back':
+                    manager_generate()
+                    break
+                else:
+                    break
+
+            check_in_check = [str(int(n)) for n in check_in]
+            print()
+            occupied_rooms = [n for n in order_list if check_if_a_date_is_in_range(check_in,n[3].split('-'),n[4].split('-'))]
+            occupancy_rate = len(occupied_rooms) / len(room_list) * 100
+            total_rooms = len(room_list)
+            total_booking = len([n for n in order_list if n[3].split('-') == check_in_check])
+            if total_booking == 0:
+                total_income = 0
+                avg_income_per_book = 0
+            else:
+                total_income = sum(float(n[-3]) for n in order_list if (n[3].split('-') == check_in_check))
+                avg_income_per_book = total_income / total_booking
+            check_out_tdy = len([n for n in order_list if n[4].split('-') == check_in_check])
+
+            print(f"\033[33mHotel Daily Performance Report (Date: {check_in[0]},{check_in[1]},{check_in[2]})\033[0m")
+            print(f"Total Rooms: {total_rooms}")
+            print(f"Occupied Rooms: {len(occupied_rooms)}")
+            print(f"Occupancy Rate: {occupancy_rate:.2f}%")
+            print()
+            print(f"Bookings Today: {total_booking}")
+            print(f"Total Income: {total_income}")
+            print(f"Average Income per Booking: {avg_income_per_book:.2f}")
+            print()
+            print(f"Check-ins Today: {total_booking}")
+            print(f"Check-Outs Today: {check_out_tdy}")
+            manager_generate()
+
+        case "2":
+            while True:
+                check_in = input_date("Date? (Format : DD-MM-YYYY) (type back to go back): ")
+
+                if check_in == 'back':
+                    manager_generate()
+                    break
+                else:
+                    break
+            print()
+            occupied_rooms = [n for n in order_list if check_if_a_date_is_in_range(check_in, n[3].split('-'), n[4].split('-'), True)]
+            occupancy_rate = len(occupied_rooms) / len(room_list) * 100
+            total_rooms = len(room_list)
+
+            # Get month and year from check_in for comparison
+            check_in_month_year = check_in[-2:]  # [month, year]
+            check_in_month_year = [str(int(n)) for n in check_in_month_year]
+
+            # Count bookings in this month
+            total_booking = len([n for n in order_list if n[3].split('-')[-2:] == check_in_month_year])
+
+            if total_booking == 0:
+                total_income = 0
+                avg_income_per_book = 0
+            else:
+                total_income = sum(float(n[-3]) for n in order_list if n[3].split('-')[-2:] == check_in_month_year)
+                avg_income_per_book = total_income / total_booking
+
+            check_out_tdy = len([n for n in order_list if n[4].split('-')[-2:] == check_in_month_year])
+
+            print(f"\033[33mHotel Monthly Performance Report (Date: {check_in[1]},{check_in[2]})\033[0m")
+            print(f"Total Rooms: {total_rooms}")
+            print(f"Occupied Rooms: {len(occupied_rooms)}")
+            print(f"Occupancy Rate: {occupancy_rate:.2f}%")
+            print()
+            print(f"Bookings Today: {total_booking}")
+            print(f"Total Income: {total_income}")
+            print(f"Average Income per Booking: {avg_income_per_book:.2f}")
+            print()
+            print(f"Check-ins Today: {total_booking}")
+            print(f"Check-Outs Today: {check_out_tdy}")
+            manager_generate()
+        case "3":
+            manager_menu()
 #Receptionist Functions
 def receptionist_menu(): #This is just the menu of the Receptionist
     option_dict = {
@@ -362,23 +553,28 @@ def receptionist_menu(): #This is just the menu of the Receptionist
 
 def receptionist_register():
     guest_List = decode_txt_File_to_list_of_data("guest.txt")
-    header = ['Special_ID''Name', 'phone_number','email','address']
+    header = ['Special_ID','Name', 'phone_number','email','address']
 
     while True:
         print(" ")
         print("\033[34mWelcome You are Currently the Receptionist\033[0m")
         print("\033[34mThese are the current Guests\033[0m")
         print("Index".ljust(10),end="")
+
+        # Print header row
         for col in header:
-            print(col.ljust(30),end="")
+            print(str(col).ljust(30), end="")
         print()
 
-        for i, row in enumerate(guest_List,start=1):
-            print(str(i).ljust(10),end='')
+        # Print data rows
+        for i, row in enumerate(guest_List, start=1):
+            print(str(i).ljust(10), end="")  # Row number
             for col in row:
-                print(str(col).ljust(30),end="")
+                print(str(col).ljust(30), end="")
             print()
+
         print()
+
 
         print("\033[34mWhat do you want to do?\033[0m")
         print("1. Register a New Guest")
@@ -438,10 +634,10 @@ def receptionist_update_guest():
         try:
             temp_index = input("Please enter the Unique ID of the Guest you want to edit (type: back to go back to menu): ")
             if temp_index.lower() == 'back':
-                receptionist_manage_booking()
+                receptionist_register()
                 return
             else:
-                temp_index = str(int(temp_index) - 1)
+                temp_index = str(int(temp_index))
         except ValueError:
             print("Invalid Input")
             continue
@@ -541,73 +737,16 @@ def receptionist_manage_booking():
     room_list = decode_txt_File_to_list_of_data("room.txt")
     guest_list = decode_txt_File_to_list_of_data("guest.txt")
     order_Listz = decode_txt_File_to_list_of_data("order_report.txt")
-    header = ["Room Special ID"'Occupancy Guest ID', 'Pricing','Cleaning_Status', 'Message']
-    header2 = ['Special_ID''Name', 'phone_number','email','address']
+    header = ["Room Special ID", 'Pricing','Cleaning_Status', 'Message']
+    header2 = ['Special_ID','Name', 'phone_number','email','address']
+    order_id_check = [row[0] for row in order_Listz]
+    order_id_check_unfinished = [row[0] for row in order_Listz if row[-1] in ['-','']]
 
     option_picked = None
     
     while option_picked not in ['1', '2', '3', '4']: #Checking if the input is valid or not
         print(" ") #spacing reasons
         print("\033[34mManaging Rooms\033[0m")
-        print("\033[34mThese are the current Rooms\033[0m")
-
-        # correct headers
-        header = ["Room Special ID", "Occupancy/Guest ID", "Pricing", "Cleaning_Status", "Message"]
-
-        # compute column widths from header + data
-        cols = len(header)
-        rows = room_list if room_list else []
-        col_widths = [len(header[i]) for i in range(cols)]
-        for r in rows:
-            for i in range(min(cols, len(r))):
-                col_widths[i] = max(col_widths[i], len(str(r[i])))
-
-        # print header
-        print("Index".ljust(6), end=" ")
-        for i, col in enumerate(header):
-            print(col.ljust(col_widths[i] + 2), end="")
-        print()
-
-        # print rows
-        for i, row in enumerate(rows, start=1):
-            print(str(i).ljust(6), end=" ")
-            for j in range(cols):
-                val = str(row[j]) if j < len(row) else ""
-                print(val.ljust(col_widths[j] + 2), end="")
-            print()
-
-        print()
-
-        print("\033[34mThese are the current Guests\033[0m")
-        # correct guest headers
-        header2 = ['Special_ID', 'Name', 'phone_number', 'email', 'address']
-
-        cols2 = len(header2)
-        rows2 = guest_list if guest_list else []
-        col_widths2 = [len(header2[i]) for i in range(cols2)]
-        for r in rows2:
-            for i in range(min(cols2, len(r))):
-                col_widths2[i] = max(col_widths2[i], len(str(r[i])))
-
-        print("Index".ljust(6), end=" ")
-        for i, col in enumerate(header2):
-            print(col.ljust(col_widths2[i] + 2), end="")
-        print()
-
-        for i, row in enumerate(rows2, start=1):
-            print(str(i).ljust(6), end=" ")
-            for j in range(cols2):
-                val = str(row[j]) if j < len(row) else ""
-                print(val.ljust(col_widths2[j] + 2), end="")
-            print()
-        print()
-
-        guest_id_check = [row[0] for row in guest_list]
-        room_id_check = [row[0] for row in room_list]
-        order_id_check = [row[0] for row in order_Listz]
-        order_id_check_unfinished = [row[0] for row in order_Listz if row[-1] in ['-','']]
-    
-
         print("\033[34mWhat do you want to do?\033[0m")
         print("1. Check IN a Room")
         print("2. Check Out a Room")
@@ -617,88 +756,150 @@ def receptionist_manage_booking():
     
     match option_picked:
         case "1":
+            # --- Get Check-In Date ---
             while True:
-                guest_id = input("Please Enter the Guest Special ID (type back to go back): ")
-                if guest_id == 'back':
-                    receptionist_manage_booking()
-                    break
-                if guest_id not in guest_id_check:
-                    print("Guest ID isnt Registered!")
-                    continue
-                else:
-                    break
-
-            while True:
-                try:
-                    room_id = input("Please Enter the Room Special ID (type back to go back): ")
-                    if room_id == 'back':
-                        receptionist_manage_booking()
-                        break
-
-                    if room_id not in room_id_check:
-                        print("Room ID isnt Registered!")
-                        continue
-
-                    # find the room index using the id lookup list (room_list contains rows)
-                    r_count = room_id_check.index(room_id)
-
-                    # occupancy is stored at index 0 (use '-' or '' to mean available)
-                    occ = str(room_list[r_count][1]) if len(room_list[r_count]) > 0 else ''
-                    if occ in ('-', ''):
-                        break
-                    else:
-                        print("Room is already Occupied!")
-                        continue
-
-                except Exception:
-                    print("Invalid input")
-                    continue
-
-            while True:
-                try:
-                    days_booked = input("How Many Days Are you staying? (type back to go back): ")
-                    if days_booked == 'back':
-                        receptionist_manage_booking()
-                        break
-
-                    days_booked = str(int(days_booked))
-                    break
-
-                except:
-                    print("Invalid input")
-                    continue
-
-            while True:
-                check_in = input_date("Check In Date? (Format : DD-MM-YYYY) (type back to go back): ")
+                check_in = input_date("Check In Date? (Format: DD-MM-YYYY) (type back to go back): ")
                 if check_in == 'back':
                     receptionist_manage_booking()
-                    break
+                    return
                 else:
+                    check_in = [int(n) for n in check_in]
                     break
 
+            # --- Get Number of Days ---
+            while True:
+                days_booked = input("How Many Days Are you staying? (type back to go back): ")
+                if days_booked == 'back':
+                    receptionist_manage_booking()
+                    return
+                try:
+                    days_booked = int(days_booked)
+                    if days_booked <= 0:
+                        print("Days must be greater than 0")
+                        continue
+                    break
+                except ValueError:
+                    print("Invalid input. Enter a number.")
+                    continue
 
-            for i,row in enumerate(room_id_check):
-                if row == room_id:
-                    r_count = i
+            # --- Calculate Check-Out Date ---
+            check_out = calculate_check_out_date_from_check_in_date(check_in, days_booked)
 
-            Total_Price = float(room_list[r_count][2]) * float(days_booked) #Calculates the Prices
-            room_list[r_count][1] = str(guest_id)
+            # --- Find Available Rooms ---
+            available_rooms = []
+            available_rooms_ids = []
+            for room in room_list:
+                # room[0] is Room Special ID
+                overlapping_orders = [
+                    order for order in order_Listz
+                    if (order[2] == room[0]) and (order[-1] in ['-', ''])
+                    and (check_if_two_date_range_intertwine(check_in, check_out, order[3].split('-'), order[4].split('-')))
+                ]
+                
+                if not overlapping_orders:
+                    available_rooms.append(room)
+                    available_rooms_ids.append(room[0])
 
-            #Order ID, Member ID, Room ID, Check IN date, Check OUT date, Total Price, Total Days Booked, Actual payed
-            order_list = ['',str(guest_id),str(room_id),'-'.join(check_in),"-",str(Total_Price),days_booked,'-']
+            if not available_rooms:
+                print("\033[31mNo rooms are available for this date range.\033[0m")
+                receptionist_manage_booking()
+                return
 
-            # Assign Order ID
-            if len(order_Listz) < 1:
-                order_list[0] = "0"
-            else:
-                order_list[0] = str(int(order_Listz[len(order_Listz) - 1][0]) + 1)
+            # --- Display Available Rooms ---
+            print()
+            print(f"\033[34mAvailable Rooms ({check_in[0]},{check_in[1]},{check_in[2]} - {check_out[0]},{check_out[1]},{check_out[2]}):\033[0m")
+            header = ["Room Special ID", "Pricing", "Cleaning_Status", "Message"]
+            cols = len(header)
+            col_widths = [len(col) for col in header]
+            for r in available_rooms:
+                for i in range(cols):
+                    col_widths[i] = max(col_widths[i], len(str(r[i])))
 
-            from_array_to_txt_file_conversion(room_list,'room.txt',"w")
-            from_array_to_txt_file_conversion(order_list,'order_report.txt',"a+")
-            print(f"\033[32mSuccessfully Check In a Guest \033[00m")
+            print("Index".ljust(6), end=" ")
+            for i, col in enumerate(header):
+                print(col.ljust(col_widths[i] + 2), end="")
+            print()
+            for idx, row in enumerate(available_rooms, start=1):
+                print(str(idx).ljust(6), end=" ")
+                for j in range(cols):
+                    val = str(row[j]) if j < len(row) else ""
+                    print(val.ljust(col_widths[j] + 2), end="")
+                print()
+            print()
+
+            # --- Display Guests ---
+            print("\033[34mCurrent Guests:\033[0m")
+            header2 = ['Special_ID', 'Name', 'phone_number', 'email', 'address']
+            cols2 = len(header2)
+            col_widths2 = [len(col) for col in header2]
+            for g in guest_list:
+                for i in range(cols2):
+                    col_widths2[i] = max(col_widths2[i], len(str(g[i])))
+
+            print("Index".ljust(6), end=" ")
+            for i, col in enumerate(header2):
+                print(col.ljust(col_widths2[i] + 2), end="")
+            print()
+            for idx, row in enumerate(guest_list, start=1):
+                print(str(idx).ljust(6), end=" ")
+                for j in range(cols2):
+                    val = str(row[j]) if j < len(row) else ""
+                    print(val.ljust(col_widths2[j] + 2), end="")
+                print()
+            print()
+
+            # --- Select Guest ---
+            print()
+            print("\033[34mEnter The Remaining Credentials:\033[0m")
+            guest_ids = [guest[0] for guest in guest_list]
+            while True:
+                guest_id = input("Enter Guest Special ID (type back to go back): ")
+                if guest_id == 'back':
+                    receptionist_manage_booking()
+                    return
+                if guest_id not in guest_ids:
+                    print("Guest ID isn't registered!")
+                    continue
+                break
+
+            # --- Select Room ---
+            while True:
+                room_id = input("Enter Room Special ID (type back to go back): ")
+                if room_id == 'back':
+                    receptionist_manage_booking()
+                    return
+                if room_id not in available_rooms_ids:
+                    print("Room ID isn't available!")
+                    continue
+                break
+
+            # --- Calculate Total Price ---
+            room_index = next(i for i, r in enumerate(room_list) if r[0] == room_id)
+            Total_Price = float(room_list[room_index][1]) * days_booked
+
+            check_in = [str(n) for n in check_in]
+            check_out = [str(n) for n in check_out]
+            # --- Create Order ---
+            order_list = [
+                str(int(order_Listz[-1][0]) + 1) if order_Listz else "0",
+                str(guest_id),
+                str(room_id),
+                '-'.join(check_in),
+                '-'.join(check_out),
+                str(Total_Price),
+                str(days_booked),
+                '-'
+            ]
+
+            from_array_to_txt_file_conversion(order_list, 'order_report.txt', "a+")
+            print("\033[32mSuccessfully Checked In a Guest\033[0m")
             receptionist_manage_booking()
 
         case '2':
+            if len(order_id_check_unfinished) < 1:
+                print("\033[91mThere is no Unfinished Orders\033[0m")
+                receptionist_manage_booking()
+                return
             print(" ") #spacing reasons
             print("\033[34mManaging Rooms\033[0m")
             print("\033[34mThese are the current unfinished orders\033[0m")
@@ -710,7 +911,7 @@ def receptionist_manage_booking():
             print()
 
             for i, row in enumerate(order_Listz,start=1):
-                if row[4] == '-':
+                if row[-1] == '-':
                     print(str(i).ljust(10),end='')
                     for col in row :
                         print(str(col).ljust(20),end="")
@@ -730,14 +931,6 @@ def receptionist_manage_booking():
                     break
 
             while True:
-                check_out = input_date("Check OUT Date (Format: 00-00-0000) (type: back to go back to menu): ") 
-                if check_out == 'back':
-                    receptionist_manage_booking()
-                    return
-                else:
-                    break
-
-            while True:
                 try:
                     actually_payed = input("Amount Actually Payed? (type: back to go back to menu): ")
                     if actually_payed.lower() == "back":
@@ -753,26 +946,13 @@ def receptionist_manage_booking():
 
             
 
-            order_Listz[order_id_check.index(order_id)][4] = check_out
             order_Listz[order_id_check.index(order_id)][-1] = actually_payed
-
-            order_idx = order_id_check.index(order_id)
-            room_id_of_order = order_Listz[order_idx][2]
-
-            if room_id_of_order in room_id_check:
-                room_idx = room_id_check.index(room_id_of_order)
-                room_list[room_idx][1] = "-"      # reset price/placeholder
-                room_list[room_idx][3] = "False"  # mark as not occupied / cleaned
-            else:
-                print("\033[31mWarning: Room ID referenced by order not found in room list.\033[0m")
-
             from_array_to_txt_file_conversion(order_Listz,'order_report.txt','w')
-            from_array_to_txt_file_conversion(room_list,'room.txt','w')
             print(f"\033[32mSuccessfully Check Out a Guest \033[00m")
             receptionist_manage_booking()
     
         case '3':
-            if len(order_Listz) < 1:
+            if len(order_id_check_unfinished) < 1:
                 print("\033[91mThere is no Unfinished Orders\033[0m")
                 receptionist_manage_booking()
                 return
@@ -788,7 +968,7 @@ def receptionist_manage_booking():
             print()
 
             for i, row in enumerate(order_Listz,start=1):
-                if row[4] == '-':
+                if row[-1] == '-':
                     print(str(i).ljust(10),end='')
                     for col in row :
                         print(str(col).ljust(20),end="")
@@ -823,36 +1003,79 @@ def receptionist_manage_booking():
 
 def receptionist_view_room_availability():
     room_list = decode_txt_File_to_list_of_data('room.txt')
-
-    print(" ") #spacing reasons
-    print("\033[34mManaging Rooms\033[0m")
-    print("\033[34mThese are the current Rooms Available \033[0m")
+    order_listz = decode_txt_File_to_list_of_data("order_report.txt")
 
     # correct headers
     header = ["Room Special ID", "Occupancy/Guest ID", "Pricing", "Cleaning_Status", "Message"]
 
-    # compute column widths from header + data
+    while True:
+        check_in = input_date("Check In Date? (Format: DD-MM-YYYY) (type back to go back): ")
+        if check_in == 'back':
+            receptionist_menu()
+            return
+        else:
+            check_in = [int(n) for n in check_in]
+            break
+
+    # --- Get Number of Days ---
+    while True:
+        days_booked = input("How Many Days Are you staying? (type back to go back): ")
+        if days_booked == 'back':
+            receptionist_manage_booking()
+            return
+        try:
+            days_booked = int(days_booked)
+            if days_booked <= 0:
+                print("Days must be greater than 0")
+                continue
+            break
+        except ValueError:
+            print("Invalid input. Enter a number.")
+            continue
+
+    # --- Calculate Check-Out Date ---
+    check_out = calculate_check_out_date_from_check_in_date(check_in, days_booked)
+
+    # --- Find Available Rooms ---
+    available_rooms = []
+    available_rooms_ids = []
+    for room in room_list:
+        # room[0] is Room Special ID
+        overlapping_orders = [
+            order for order in order_listz
+            if (order[2] == room[0]) and (order[-1] in ['-', ''])
+            and (check_if_two_date_range_intertwine(check_in, check_out, order[3].split('-'), order[4].split('-')))
+        ]
+        
+        if not overlapping_orders:
+            available_rooms.append(room)
+            available_rooms_ids.append(room[0])
+
+    if not available_rooms:
+        print("\033[31mNo rooms are available for this date range.\033[0m")
+        receptionist_manage_booking()
+        return
+    
+    print(" ") #spacing reasons
+    print("\033[34mManaging Rooms\033[0m")
+    print(f"\033[34mAvailable Rooms ({check_in[0]},{check_in[1]},{check_in[2]} - {check_out[0]},{check_out[1]},{check_out[2]}):\033[0m")
+    header = ["Room Special ID", "Pricing", "Cleaning_Status", "Message"]
     cols = len(header)
-    rows = room_list if room_list else []
-    col_widths = [len(header[i]) for i in range(cols)]
-    for r in rows:
-        for i in range(min(cols, len(r))):
+    col_widths = [len(col) for col in header]
+    for r in available_rooms:
+        for i in range(cols):
             col_widths[i] = max(col_widths[i], len(str(r[i])))
 
-    # print header
     print("Index".ljust(6), end=" ")
     for i, col in enumerate(header):
         print(col.ljust(col_widths[i] + 2), end="")
     print()
-
-    # print rows
-    for i, row in enumerate(rows, start=1):
-        if row[1] in ['','-']:
-            print(str(i).ljust(6), end=" ")
-            for j in range(cols):
-                val = str(row[j]) if j < len(row) else ""
-                print(val.ljust(col_widths[j] + 2), end="")
-            print()
+    for idx, row in enumerate(available_rooms, start=1):
+        print(str(idx).ljust(6), end=" ")
+        for j in range(cols):
+            val = str(row[j]) if j < len(row) else ""
+            print(val.ljust(col_widths[j] + 2), end="")
+        print()
     print()
 
     while True:
