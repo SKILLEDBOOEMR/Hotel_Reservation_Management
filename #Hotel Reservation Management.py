@@ -79,10 +79,13 @@ def from_array_to_txt_file_conversion(lists, file_type, Typing_type):
         print(f"\033[31mError writing to file {file_type}: {e}\033[0m")
     except Exception as e:
         print(f"\033[31mUnexpected error: {e}\033[0m")
-def input_date(prompt, allow_back=True):
+def input_date(prompt, allow_back=True,special=False,special_data=''):
     """Prompt for date in DD-MM-YYYY format. Returns list [day, month, year] or 'back'."""
     while True:
-        resp = input(prompt).strip()
+        if not special:
+            resp = input(prompt).strip()
+        else:
+            resp = special_data.strip()
         if allow_back and resp.lower() == 'back':
             return 'back'
         try:
@@ -93,12 +96,18 @@ def input_date(prompt, allow_back=True):
             # Validate ranges
             if not (1 <= day <= 31):
                 print("\033[31mDay must be between 1 and 31.\033[0m")
+                if special:
+                    return
                 continue
             if not (1 <= month <= 12):
                 print("\033[31mMonth must be between 1 and 12.\033[0m")
+                if special:
+                    return
                 continue
             if not (len(str(year)) == 4):
                 print("\033[31mYear must be 4 digits.\033[0m")
+                if special:
+                    return
                 continue
             return parts
         except (ValueError, IndexError):
@@ -173,6 +182,25 @@ def check_if_a_date_is_in_range(date1, start1, end1,month_only = False):
     
     # Check if date1 is within range (inclusive)
     return start1 <= date1 <= end1
+def print_list_in_a_readable_manner(lists:list,header:list):
+    cols = len(header)
+    col_widths = [len(col) for col in header]
+    for r in lists:
+        for i in range(cols):
+            col_widths[i] = max(col_widths[i], len(str(r[i])))
+
+    print("Index".ljust(6), end=" ")
+    for i, col in enumerate(header):
+        print(col.ljust(col_widths[i] + 2), end="")
+    print()
+
+    for idx, row in enumerate(lists, start=1):
+        print(str(idx).ljust(6), end=" ")
+        for j in range(cols):
+            val = str(row[j]) if j < len(row) else ""
+            print(val.ljust(col_widths[j] + 2), end="")
+        print()
+    print()
 
 #Manager Functions
 def manager_menu(): #This is just the menu of the manager
@@ -219,16 +247,7 @@ def manager_manage():
         print("\033[33mWelcome You are Currently the Manager\033[0m")
         print("\033[33mThese are the current Rooms\033[0m")
         #Printing in a nice table format
-        print("Index".ljust(10),end="")
-        for col in header:
-            print(col.ljust(20),end="")
-        print()
-
-        for i, row in enumerate(room_list,start=1):
-            print(str(i).ljust(10),end='')
-            for col in row :
-                print(str(col).ljust(20),end="")
-            print()
+        print_list_in_a_readable_manner(room_list,header)
 
         print()
         print("\033[33mWhat do you want to do?\033[0m")
@@ -560,20 +579,7 @@ def receptionist_register():
         print("\033[34mWelcome You are Currently the Receptionist\033[0m")
         print("\033[34mThese are the current Guests\033[0m")
         print("Index".ljust(10),end="")
-
-        # Print header row
-        for col in header:
-            print(str(col).ljust(30), end="")
-        print()
-
-        # Print data rows
-        for i, row in enumerate(guest_List, start=1):
-            print(str(i).ljust(10), end="")  # Row number
-            for col in row:
-                print(str(col).ljust(30), end="")
-            print()
-
-        print()
+        print_list_in_a_readable_manner(guest_List,header)
 
 
         print("\033[34mWhat do you want to do?\033[0m")
@@ -809,44 +815,12 @@ def receptionist_manage_booking():
             print()
             print(f"\033[34mAvailable Rooms ({check_in[0]},{check_in[1]},{check_in[2]} - {check_out[0]},{check_out[1]},{check_out[2]}):\033[0m")
             header = ["Room Special ID", "Pricing", "Cleaning_Status", "Message"]
-            cols = len(header)
-            col_widths = [len(col) for col in header]
-            for r in available_rooms:
-                for i in range(cols):
-                    col_widths[i] = max(col_widths[i], len(str(r[i])))
-
-            print("Index".ljust(6), end=" ")
-            for i, col in enumerate(header):
-                print(col.ljust(col_widths[i] + 2), end="")
-            print()
-            for idx, row in enumerate(available_rooms, start=1):
-                print(str(idx).ljust(6), end=" ")
-                for j in range(cols):
-                    val = str(row[j]) if j < len(row) else ""
-                    print(val.ljust(col_widths[j] + 2), end="")
-                print()
-            print()
+            print_list_in_a_readable_manner(available_rooms,header)
 
             # --- Display Guests ---
             print("\033[34mCurrent Guests:\033[0m")
             header2 = ['Special_ID', 'Name', 'phone_number', 'email', 'address']
-            cols2 = len(header2)
-            col_widths2 = [len(col) for col in header2]
-            for g in guest_list:
-                for i in range(cols2):
-                    col_widths2[i] = max(col_widths2[i], len(str(g[i])))
-
-            print("Index".ljust(6), end=" ")
-            for i, col in enumerate(header2):
-                print(col.ljust(col_widths2[i] + 2), end="")
-            print()
-            for idx, row in enumerate(guest_list, start=1):
-                print(str(idx).ljust(6), end=" ")
-                for j in range(cols2):
-                    val = str(row[j]) if j < len(row) else ""
-                    print(val.ljust(col_widths2[j] + 2), end="")
-                print()
-            print()
+            print_list_in_a_readable_manner(guest_list,header2)
 
             # --- Select Guest ---
             print()
@@ -905,19 +879,7 @@ def receptionist_manage_booking():
             print("\033[34mThese are the current unfinished orders\033[0m")
             #Printing in a nice table format
             header = ["Order ID","Member ID", "Room ID", "Check IN date", "Check OUT date", "Total Price", "Total Days Booked", "Actual payed"]
-            print("Index".ljust(10),end="")
-            for col in header:
-                print(col.ljust(20),end="")
-            print()
-
-            for i, row in enumerate(order_Listz,start=1):
-                if row[-1] == '-':
-                    print(str(i).ljust(10),end='')
-                    for col in row :
-                        print(str(col).ljust(20),end="")
-                    print()
-
-            print()
+            print_list_in_a_readable_manner(order_Listz,header)
 
             while True:
                 order_id = input("Please Enter the Order Special ID (type back to go back): ")
@@ -962,18 +924,7 @@ def receptionist_manage_booking():
             print("\033[34mThese are the current unfinished orders\033[0m")
             #Printing in a nice table format
             header = ["Order ID","Member ID", "Room ID", "Check IN date", "Check OUT date", "Total Price", "Total Days Booked", "Actual payed"]
-            print("Index".ljust(10),end="")
-            for col in header:
-                print(col.ljust(20),end="")
-            print()
-
-            for i, row in enumerate(order_Listz,start=1):
-                if row[-1] == '-':
-                    print(str(i).ljust(10),end='')
-                    for col in row :
-                        print(str(col).ljust(20),end="")
-                    print()
-            print()
+            print_list_in_a_readable_manner(order_Listz,header)
 
             while True:
                 order_id = input("Please Enter the Order Special ID (type back to go back): ")
@@ -1060,23 +1011,7 @@ def receptionist_view_room_availability():
     print("\033[34mManaging Rooms\033[0m")
     print(f"\033[34mAvailable Rooms ({check_in[0]},{check_in[1]},{check_in[2]} - {check_out[0]},{check_out[1]},{check_out[2]}):\033[0m")
     header = ["Room Special ID", "Pricing", "Cleaning_Status", "Message"]
-    cols = len(header)
-    col_widths = [len(col) for col in header]
-    for r in available_rooms:
-        for i in range(cols):
-            col_widths[i] = max(col_widths[i], len(str(r[i])))
-
-    print("Index".ljust(6), end=" ")
-    for i, col in enumerate(header):
-        print(col.ljust(col_widths[i] + 2), end="")
-    print()
-    for idx, row in enumerate(available_rooms, start=1):
-        print(str(idx).ljust(6), end=" ")
-        for j in range(cols):
-            val = str(row[j]) if j < len(row) else ""
-            print(val.ljust(col_widths[j] + 2), end="")
-        print()
-    print()
+    print_list_in_a_readable_manner(available_rooms,header)
 
     while True:
         inputs = input("Enter Back to go Back: ")
@@ -1086,7 +1021,7 @@ def receptionist_view_room_availability():
         else:
             print("Invalid Input")
 
-
+#Accountant Functions
 def accountant_menu(): #This is just the menu of the Receptionist
     option_dict = {
         '1' : accountant_record_guest_payments,
@@ -1111,17 +1046,148 @@ def accountant_menu(): #This is just the menu of the Receptionist
         print("4. Back")
         option_picked = str(input("\033[35mPlease pick one just state the number\033[0m (eg 1,2,3,4): "))
 
+    print()
     option_dict[option_picked]() #calling the function 
 
 def accountant_record_guest_payments():
+    order_list = decode_txt_File_to_list_of_data("order_report.txt")
+    income_header = ['Order ID','Guest ID','Room Id', 'Check In', 'CheckOut', 'Payment Due','Days Spent', 'Actually Payed']
+    print("\033[35mWelcome You are Currently the Accountant\033[0m")
+    print("\033[35mGuest Orders and Payments\033[0m")
+
+    print_list_in_a_readable_manner(order_list,income_header)
+    accountant_menu()
     pass
 
 def accountant_generate_income_and_outstanding_payment_reports():
-    pass
+    order_list = decode_txt_File_to_list_of_data("order_report.txt")
+    guest_list = decode_txt_File_to_list_of_data("guest.txt")
+    guest_id_list = [n[0] for n in guest_list]
+    income_header = ['Date','Guest ID','Guest Name','Room Id', 'Days Spent', 'Rate per Night', 'Total Income']
+
+    while True:
+        print("\033[35mWelcome You are Currently the Accountant\033[0m")
+        print("\033[35mOutstanding and Income Reports\033[0m")
+        print("1. Daily")
+        print("2. Monthly")
+        print("3. Yearly")
+        print("4. Back")
+        option_picked = str(input("\033[35mPlease pick one just state the number\033[0m (eg 1,2,3,4): "))
+
+        if option_picked in ['1','2','3','4']:
+            break
+
+    match option_picked:
+        case '1':
+            while True:
+                date = input_date("Date? (Format : DD-MM-YYYY) (type back to go back): ")
+
+                if date == 'back':
+                    accountant_menu()
+                    break
+                else:
+                    date = [str(int(n)) for n in date]
+                    break
+
+            income_report_list = []
+            outstanding_report_list = []
+            for row in order_list:
+                if row[4].split('-') == date and row[-1] not in ['-',''] :
+                    income_report_list.append([row[4],row[1],guest_list[guest_id_list.index(row[1])][1],row[2],row[-2],(float(row[-3]) / float(row[-2])),row[-1]])
+                elif row[3].split('-') == date and row[-1] in ['-',''] :
+                    outstanding_report_list.append([row[3],row[1],guest_list[guest_id_list.index(row[1])][1],row[2],row[-2],(float(row[-3]) / float(row[-2])),row[-3]])
+
+            print()
+            print("\033[35mIncome Report\033[0m")
+            print_list_in_a_readable_manner(income_report_list,income_header)
+            print("\033[35mOutstanding Report\033[0m")
+            print_list_in_a_readable_manner(outstanding_report_list,income_header)
+            accountant_menu()
+
+        case '2':
+            while True:
+                date_input = input("Date? (Format : MM-YYYY) (type back to go back): ")
+                date = input_date("",True,True,f'1-{date_input}')
+
+                if date == 'back':
+                    accountant_menu()
+                    break
+                else:
+                    date = [str(int(n)) for n in date]
+                    break
+            income_report_list = []
+            outstanding_report_list = []
+            for row in order_list:
+                if row[4].split('-')[1:] == date[1:] and row[-1] not in ['-',''] :
+                    income_report_list.append([row[4],row[1],guest_list[guest_id_list.index(row[1])][1],row[2],row[-2],(float(row[-3]) / float(row[-2])),row[-1]])
+                elif row[3].split('-')[1:] == date[1:] and row[-1] in ['-',''] :
+                    outstanding_report_list.append([row[3],row[1],guest_list[guest_id_list.index(row[1])][1],row[2],row[-2],(float(row[-3]) / float(row[-2])),row[-3]])
+
+            print()
+            print("\033[35mIncome Report\033[0m")
+            print_list_in_a_readable_manner(income_report_list,income_header)
+            print("\033[35mOutstanding Report\033[0m")
+            print_list_in_a_readable_manner(outstanding_report_list,income_header)
+            accountant_menu()
+
+        case '3':
+            while True:
+                date_input = input("Date? (Format : YYYY) (type back to go back): ")
+                date = input_date("",True,True,f'1-1-{date_input}')
+
+                if date == 'back':
+                    accountant_menu()
+                    break
+                else:
+                    date = [str(int(n)) for n in date]
+                    break
+            income_report_list = []
+            outstanding_report_list = []
+            for row in order_list:
+                if row[4].split('-')[2:] == date[1:] and row[-1] not in ['-',''] :
+                    income_report_list.append([row[4],row[1],guest_list[guest_id_list.index(row[1])][1],row[2],row[-2],(float(row[-3]) / float(row[-2])),row[-1]])
+                elif row[3].split('-')[2:] == date[1:] and row[-1] in ['-',''] :
+                    outstanding_report_list.append([row[3],row[1],guest_list[guest_id_list.index(row[1])][1],row[2],row[-2],(float(row[-3]) / float(row[-2])),row[-3]])
+
+
+            print()
+            print("\033[35mIncome Report\033[0m")
+            print_list_in_a_readable_manner(income_report_list,income_header)
+            print("\033[35mOutstanding Report\033[0m")
+            print_list_in_a_readable_manner(outstanding_report_list,income_header)
+            accountant_menu()
+        case '4':
+            accountant_menu()
 
 def accountant_generate_monthly_financial_summary():
+    order_List = decode_txt_File_to_list_of_data("order_report.txt")
+    while True:
+        check_input = input("Date? (Format : MM-YYYY) (type back to go back): ")
+        check_in = input_date("",True,True,f'1-{check_input}')
+
+        if check_in == 'back':
+            accountant_menu()
+            break
+        else:
+            check_in = [str(int(n)) for n in check_in]
+            break
+
+    order_tied_to_date = [n for n in order_List if check_in[1:] == n[3].split('-')[1:]]
+    total_reservations = len(order_tied_to_date)
+    Total_Revenue = sum([float(n[-1]) for n in order_List if n[-1] not in ['','-']])
+    Total_Outstanding = sum([float(n[-3]) for n in order_List if n[-1] in ['','-']])
+    
+    print()
+    print("\033[35mWelcome You are Currently the Accountant\033[0m")
+    print("\033[35mMonthly Financial Summary\033[0m")
+    print(f'Total Reservations: {total_reservations}')
+    print(f'Total Revenue: {Total_Revenue}')
+    print(f'Total Outstanding: {Total_Outstanding}')
+    accountant_menu()
+    
     pass
 
+#housekeeper
 def housekeeper_menu(): #This is just the menu of the House Keeper
     option_dict = {
         '1' : housekeeper_update_room_cleaning_status,
