@@ -1144,9 +1144,9 @@ def accountant_generate_income_and_outstanding_payment_reports():
             income_report_list = []
             outstanding_report_list = []
             for row in order_list:
-                if row[4].split('-')[2:] == date[1:] and row[-1] not in ['-',''] :
+                if row[4].split('-')[2:] == date[2:] and row[-1] not in ['-',''] :
                     income_report_list.append([row[4],row[1],guest_list[guest_id_list.index(row[1])][1],row[2],row[-2],(float(row[-3]) / float(row[-2])),row[-1]])
-                elif row[3].split('-')[2:] == date[1:] and row[-1] in ['-',''] :
+                elif row[3].split('-')[2:] == date[2:] and row[-1] in ['-',''] :
                     outstanding_report_list.append([row[3],row[1],guest_list[guest_id_list.index(row[1])][1],row[2],row[-2],(float(row[-3]) / float(row[-2])),row[-3]])
 
 
@@ -1174,8 +1174,8 @@ def accountant_generate_monthly_financial_summary():
 
     order_tied_to_date = [n for n in order_List if check_in[1:] == n[3].split('-')[1:]]
     total_reservations = len(order_tied_to_date)
-    Total_Revenue = sum([float(n[-1]) for n in order_List if n[-1] not in ['','-']])
-    Total_Outstanding = sum([float(n[-3]) for n in order_List if n[-1] in ['','-']])
+    Total_Revenue = sum([float(n[-1]) for n in order_tied_to_date if n[-1] not in ['','-']])
+    Total_Outstanding = sum([float(n[-3]) for n in order_tied_to_date if n[-1] in ['','-']])
     
     print()
     print("\033[35mWelcome You are Currently the Accountant\033[0m")
@@ -1184,8 +1184,6 @@ def accountant_generate_monthly_financial_summary():
     print(f'Total Revenue: {Total_Revenue}')
     print(f'Total Outstanding: {Total_Outstanding}')
     accountant_menu()
-    
-    pass
 
 #housekeeper
 def housekeeper_menu(): #This is just the menu of the House Keeper
