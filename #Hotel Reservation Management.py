@@ -20,7 +20,7 @@ def startup():
     
 #file management 
 def file_init():
-    files_to_create = ["room.txt", "order_report.txt","booking.txt", "system_report.txt","guest.txt"]
+    files_to_create = ["room.txt", "order_report.txt", "system_report.txt","guest.txt","Cleaning_Report.txt"]
     
     for file_name in files_to_create:
         try:
@@ -31,19 +31,23 @@ def file_init():
             print(f"Error creating {file_name}: {e}")
 
 #Built in function replacements (RAHHHHHH WHY?)
-def _strip(string):
-    start = 0
-    end = _len(string) - 1
+def _strip(s):
+    if not s:
+        return s
 
-    while start <= end and string[start] == " ":
+    start = 0
+    end = len(s) - 1
+
+    # Strip from the left
+    while start <= end and s[start] in (' ', '\t', '\n', '\r'):
         start += 1
-    while end >= start and string[end] == " ":
+
+    # Strip from the right
+    while end >= start and s[end] in (' ', '\t', '\n', '\r'):
         end -= 1
-        
-    res = ""
-    for i in range(start, end + 1):
-        res += string[i]
-    return res
+
+    return s[start:end+1]
+
 
 def _append(lists, thing_to_add):
     new_list = lists + [thing_to_add,]
@@ -54,7 +58,7 @@ def _split(string,thing_to_split_it_with):
     res_list = []
     for char in string:
         if char == thing_to_split_it_with :
-            _append(res_list,thing_to_add=word)
+            res_list = _append(res_list,thing_to_add=word)
             word = ""
         else:
             word += char
@@ -130,7 +134,7 @@ def decode_txt_File_to_list_of_data(file_type):
                 else:
                     file_txt.seek(0)
                     for line in file_txt:
-                        _append(res_list,_split(_strip(line),','))
+                        res_list = _append(res_list,_split(_strip(line),','))
 
                     return res_list
         except Exception:
@@ -166,9 +170,9 @@ def from_array_to_txt_file_conversion(lists, file_type, Typing_type):
 def input_date(prompt, allow_back=True, special=False, special_data=''):
     while True:
         if not special:
-            resp = _strip(input(prompt))
+            resp = input(prompt)
         else:
-            resp = _strip(special_data)
+            resp = special_data
             
         if allow_back and resp.lower() == 'back':
             return 'back'
@@ -179,6 +183,7 @@ def input_date(prompt, allow_back=True, special=False, special_data=''):
                 raise ValueError
                 
             day, month, year = int(parts[0]), int(parts[1]), int(parts[2])
+            parts = _join([str(day),str(month),str(year)],"-")
             
             if not (1 <= day <= 31):
                 print("\033[31mDay must be between 1 and 31.\033[0m")
@@ -1303,7 +1308,7 @@ def accountant_generate_monthly_financial_summary():
 def housekeeper_menu(): #This is just the menu of the House Keeper
     option_dict = {
         '1' : housekeeper_update_room_cleaning_status,
-        '2' : housekeeper_report_mauntenance_issues,
+        '2' : housekeeper_report_maintenance_issues,
         '3' : housekeeper_view_daily_cleaning_schedule,
         '4' : startup,
     } # This is a list to direct the next part when they pick 1-2-3
@@ -1327,13 +1332,90 @@ def housekeeper_menu(): #This is just the menu of the House Keeper
     option_dict[option_picked]() #calling the function 
 
 def housekeeper_update_room_cleaning_status():
-    pass
+    #Room ID, cleaned date
+    room_list = decode_txt_File_to_list_of_data("room.txt")
+    cleaning_list = decode_txt_File_to_list_of_data("Cleaning_Report.txt")
+    room_list_id = [x[0] for x in room_list]
 
-def housekeeper_report_mauntenance_issues():
-    pass
+    while True:
+        print(" ") #spacing reasons
+        print("\033[36mWelcome You are Currently the Housekeeping\033[0m")
+        dates = input_date("Please enter the Date you're going to clean (Enter back to go back) (format = dd-mm-yyyy):")
+        if dates == "back":
+            housekeeper_menu()
+            return
+
+        header = ['Room Special ID', 'Pricing', 'Cleaning_Status', 'Room Type']
+
+        # get cleaned room IDs for that date
+        cleaned_ids = [x[0] for x in cleaning_list if x[1] == dates]
+
+        # filter uncleaned rooms
+        room_list = [room for room in room_list if room[0] not in cleaned_ids]
+
+        if _len(room_list) == 0:
+            print("\033[36mNo Room uncleaned at this date\033[0m")
+            continue
+
+        room_list_id = [x[0] for x in room_list]
+
+        print_list_in_a_readable_manner(room_list, header)
+
+        while True:
+            room_id_cleaned = input("Enter the Room ID you want to Clean: ")
+            if room_id_cleaned in room_list_id:
+                break
+            print("Room ID doesn't exist!")
+
+        cleaning_list = _append(cleaning_list, [room_id_cleaned, dates])
+        from_array_to_txt_file_conversion(cleaning_list, 'Cleaning_Report.txt', 'w')
+
+        print(f"\033[36mSuccesfully Cleaned room {room_id_cleaned} at {dates}\033[0m")
+        housekeeper_menu()
+        return
+
+def housekeeper_report_maintenance_issues():
+    system_report = decode_txt_File_to_list_of_data("system_report.txt")
+
+    print(" ") #spacing reasons
+    issue = input("\033[36mEnter the reported Issue\033[0m")
+    system_report = _append(system_report,issue)
+    from_array_to_txt_file_conversion(system_report,"system_report.txt",'w')
+    print("Succesfully Added Maintenance issues: ")
+    housekeeper_menu()
 
 def housekeeper_view_daily_cleaning_schedule():
-    pass
+    #Room ID, cleaned date
+    room_list = decode_txt_File_to_list_of_data("room.txt")
+    cleaning_list = decode_txt_File_to_list_of_data("Cleaning_Report.txt")
+    room_list_id = [x[0] for x in room_list]
+
+    print(" ") #spacing reasons
+    print("\033[36mWelcome You are Currently the Housekeeping\033[0m")
+    dates = input_date("Please enter the Date you want to see schedule for  (Enter back to go back) (format = dd-mm-yyyy):")
+    if dates == "back":
+        housekeeper_menu()
+        return
+    
+    print("")
+    print(f"\033[36mUncleaned Room at date {dates}\033[0m")
+    header = ['Room Special ID', 'Pricing', 'Cleaning_Status', 'Room Type']
+
+    # get cleaned room IDs for that date
+    cleaned_ids = [x[0] for x in cleaning_list if x[1] == dates]
+
+    # filter uncleaned rooms
+    room_list = [room for room in room_list if room[0] not in cleaned_ids]
+
+    if _len(room_list) == 0:
+        print("\033[36mNo Room uncleaned at this date\033[0m")
+        housekeeper_menu()
+
+    room_list_id = [x[0] for x in room_list]
+
+    print_list_in_a_readable_manner(room_list, header)
+    housekeeper_menu()
+            
 
 #  Guest 
 def guest_menu(): #This is just the menu of the Receptionist
